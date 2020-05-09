@@ -1,6 +1,6 @@
 # Installs necessary dependencies and zips them with integration code
 function package () {
-    cd server/$1
+    cd lambda/$1
     rm -rf dependencies
     rm -f Integration.zip
     mkdir -p dependencies
