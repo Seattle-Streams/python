@@ -47,7 +47,7 @@ else
         then
             build_twilio=1
         fi
-        if [[ "${line#*/}" "youtube/"* ]];
+        if [[ "${line#*/}" == "youtube/"* ]];
         then
             build_youtube=1
         fi
