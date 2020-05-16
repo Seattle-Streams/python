@@ -19,14 +19,14 @@ function deploy () {
     echo "   Uploading latest lambda function build to S3"
     echo "--------------------------------------------------"
 
-    aws s3 cp Integration.zip s3://process-messages-builds/$2/
+    aws s3 cp Integration.zip s3://process-messages/$2/
     
     echo "-------------------------------------------"
     echo "   Pointing lambda function to new build"
     echo "-------------------------------------------"
 
     aws lambda update-function-code --function-name $1 \
-    --s3-bucket process-messages-builds \
+    --s3-bucket process-messages \
     --s3-key $2/Integration.zip \
     --region us-west-2
 
@@ -43,11 +43,11 @@ else
     build_youtube=0
     while read -r line;
     do
-        if [ "${line#*/}" == 'twilio/Integration.py' ] || [ "${line#*/}" == 'twilio/requirements.txt' ];
+        if [[ "${line#*/}" == "twilio/"* ]];
         then
             build_twilio=1
         fi
-        if [ "${line#*/}" == 'youtube/Integration.py' ] || [ "${line#*/}" == 'youtube/requirements.txt' ];
+        if [[ "${line#*/}" "youtube/"* ]];
         then
             build_youtube=1
         fi
