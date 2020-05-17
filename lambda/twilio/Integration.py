@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from urllib.parse import parse_qs
+# from twilio.twiml.messaging_response import MessagingResponse
 
 QUEUE_URL = os.environ['SQS_URL']
 
@@ -23,10 +24,12 @@ def ProcessMessage(event, context):
     print("Logging Twilio Receiving Number: ", number)
     print("Logging SMS Message: ", message)
     print("Logging SQS Response: ", response)
+    # resp = MessagingResponse()
+    # resp.message("Message Received")
     return {
         "statusCode": 200, 
-        "body": "Message Received",
+        "body": "<Response><Message><Body>Message Received!</Body></Message></Response>",
         "headers": {
-            'Content-Type': 'text/richtext',
+            'Content-Type': 'text/xml',
         }
     }
