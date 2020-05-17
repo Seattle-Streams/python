@@ -23,4 +23,10 @@ def ProcessMessage(event, context):
     print("Logging Twilio Receiving Number: ", number)
     print("Logging SMS Message: ", message)
     print("Logging SQS Response: ", response)
-    return {'statusCode': 200}
+    return {
+        "statusCode": 200, 
+        "body": "Message Received",
+        "headers": {
+            'Content-Type': 'text/richtext',
+        }
+    }
