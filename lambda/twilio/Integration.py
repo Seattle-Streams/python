@@ -14,7 +14,7 @@ def ProcessMessage(event, context):
     number = requestJSON['To'][0]
     message = requestJSON['Body'][0]
 
-    response = sqs.send_message(
+    queueResponse = sqs.send_message(
         QueueUrl=QUEUE_URL, 
         MessageBody=message, 
         MessageAttributes={
@@ -27,7 +27,7 @@ def ProcessMessage(event, context):
 
     print("Logging Twilio Receiving Number: ", number)
     print("Logging SMS Message: ", message)
-    print("Logging SQS Response: ", response)
+    print("Logging SQS Response: ", queueResponse)
 
     return {
         "statusCode": 200, 
