@@ -18,6 +18,8 @@ phases:
   build:
     commands:
       - echo Entered the build phase...
+      - pwd
+      - ls
       - rm -rf dependencies
       - rm -f Integration.zip
       - mkdir -p dependencies  
