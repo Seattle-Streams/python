@@ -16,8 +16,6 @@ phases:
 #     finally:
 #       - echo Install complete
   build:
-    runtime-versions:
-        python: 3.x
     commands:
       - echo Entered the build phase...
       - rm -rf dependencies
