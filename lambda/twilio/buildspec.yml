@@ -18,8 +18,7 @@ phases:
   build:
     commands:
       - echo Entered the build phase...
-      - pwd
-      - ls
+      - cd lambda/twilio
       - rm -rf dependencies
       - rm -f Integration.zip
       - mkdir -p dependencies  
@@ -28,6 +27,8 @@ phases:
       - zip -r9 "./../Integration.zip" .
       - cd -
       - zip -g Integration.zip Integration.py
+      - pwd
+      - ls
     finally:
       - echo Build complete
   post_build:
