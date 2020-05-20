@@ -1,24 +1,19 @@
 version: 0.2
 
-# env:
-#   variables:
-#     JAVA_HOME: "/usr/lib/jvm/java-8-openjdk-amd64"
+env:
+  variables:
+    APP: "twilio"
+    FUNCTION_NAME: "twilio_lambda"
+    BUCKET: "process-messages"
+
 #   parameter-store:
 #     LOGIN_PASSWORD: /CodeBuild/dockerLoginPassword
 
 phases:
-#   install:
-#     commands:
-#       - echo Entered the install phase...
-#     #   - "sudo yum -y update",
-#     #   - "sudo yum -y install git-all",
-#     #   - "sudo yum -y install python3-pip",
-#     finally:
-#       - echo Install complete
   build:
     commands:
       - echo Entered the build phase...
-      - cd lambda/twilio
+      - cd lambda/$APP
       - rm -rf dependencies
       - rm -f Integration.zip
       - mkdir -p dependencies  
@@ -27,14 +22,12 @@ phases:
       - zip -r9 "./../Integration.zip" .
       - cd -
       - zip -g Integration.zip Integration.py
-      - pwd
-      - ls
     finally:
       - echo Build complete
   post_build:
     commands:
       - echo Entered the post_build phase...
-      - aws s3 cp Integration.zip s3://process-messages/twilio/
-      - aws lambda update-function-code --function-name twilio_lambda --s3-bucket process-messages --s3-key twilio/Integration.zip --region us-west-2
+      - aws s3 cp Integration.zip s3://$BUCKET/$APP/
+      - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/Integration.zip --region us-west-2
     finally:
       - echo "Deploy complete"
