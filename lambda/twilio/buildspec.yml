@@ -6,9 +6,6 @@ env:
     FUNCTION_NAME: "twilio_lambda"
     BUCKET: "process-messages"
 
-#   parameter-store:
-#     LOGIN_PASSWORD: /CodeBuild/dockerLoginPassword
-
 phases:
   build:
     commands:
