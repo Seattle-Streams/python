@@ -2,65 +2,115 @@ import json
 import os
 import boto3
 from oauth2client import client
-from urllib.parse import parse_qs
-
-QUEUE_URL = os.environ['SQS_URL']
-
-SCOPES = [
-    "https://www.googleapis.com/auth/youtube.force-ssl",
-    "https://www.googleapis.com/auth/youtube.readonly"
-]
-
-s3 = boto3.client('s3')
-BUCKET_NAME = os.environ['BUCKET_NAME']
-
 
 CLIENT_SECRET_FILE_PATH = "/tmp/google_client_secret.json"
 CLIENT_SECRET_S3_KEY = "google_client_secret.json"
+SCOPES = [
+    "email",
+    "https://www.googleapis.com/auth/youtube.force-ssl",
+    "https://www.googleapis.com/auth/youtube.readonly"
+]
+BUCKET_NAME = os.environ['BUCKET_NAME']
+
+# Defined as None here to take advantage of reusing instantiated variables
+s3 = None
+dynamoDB = None
+table = None
+
+def getCredentials(authCode):  
+    try:
+        return client.credentials_from_clientsecrets_and_code(
+            CLIENT_SECRET_FILE_PATH,
+            SCOPES,
+            authCode)
+    # handle error where file does not exist
+    except FileNotFoundError:
+        if s3 is None:
+            s3 = boto3.client('s3')
+
+        s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
+        return client.credentials_from_clientsecrets_and_code(
+            CLIENT_SECRET_FILE_PATH,
+            SCOPES,
+            authCode)
+
+def authorizeUserRecord(credentials, signupEmail):
+    # make update call to 
+    
+    # Doubtful we need the google account at all
+    """ try:
+        idToken = credentials['id_token']
+    except KeyError:
+        raise ValueError("credentials object does not contain id_token")
+    try:
+        googleAccount = idToken['email']
+    except KeyError:
+        raise ValueError("id_token field in credentials does not include email")
+ """
+    credentialsInJSON = credentials.to_json()
+
+    # store entire credentials string in dynamo db
+    if dynamoDB is None:
+        # TODO: turn paramaters into environment variables and call from OS
+        dynamoDB = boto3.resource('dynamodb', region_name='us-west-2', endpoint_url="http://localhost:8000")
+
+    if table is None:
+        table = dynamoDB.Table('users')
+
+    # TODO: Fix issue here - email is key but is not received by this lambda
+    response = table.update_item(
+        Key={
+            'Email': signupEmail
+        },
+        UpdateExpression='SET credentials = :c',
+        ExpressionAttributeValues={
+            ':c': credentialsInJSON
+        }
+    )
+    return response
+    
 
 
-def getCredentials(authCode):
-    return client.credentials_from_clientsecrets_and_code(
-        CLIENT_SECRET_FILE_PATH,
-        SCOPES,
-        authCode)
-
-def authorizeUserRecord(credentials, googleAccount):
-    # make update call to dynamoDB
-    raise NotImplementedError
 
 def AuthorizeGoogleUser(event, context):
     """ 
     AuthorizeGoogleUser exchanges the Google single-use authorization code for 
     user credentials and saves those credentials in the user record corresponding
-    to the google email received
+    to the email received
 
     invariant: event field body contains variables:
-        googleAccount - the google account email
-        authCode
+        authCode - the single-use google authorization code
+        email - the email account the user signed up with
     """
      # parse event into fields
 
-    body = event["body"]
-    authCode = body["auth_code"]
-    googleAccount = body["google_account"]
+    try:
+        body = event["body"]
+    except KeyError:
+        raise ValueError("Event must contain field body")
+
+    try:
+        authCode = body["auth_code"]
+    except KeyError:
+        raise ValueError("Event body must contain field auth_code")
+    
+    try:
+        signupEmail = body["email"]
+    except KeyError:
+        raise ValueError("Event body must contain field email")
 
     # AUTH_CODE = ""
-    # Remember to verify authenticity of auth code!
+    # TODO: Remember to verify authenticity of auth code!
     # https://developers.google.com/identity/sign-in/web/backend-auth
     # use verify_oauth2_token
 
     # Exchange auth code for access token, refresh token, and ID token
 
-    # TODO: figure out if we can get the account name from the credentials directly
-    
-    try:
-        credentials = getCredentials(authCode)
-    except FileNotFoundError:
-        # handle error where file does not exist
-        s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
+    credentials = getCredentials(authCode)
 
-        credentials = getCredentials(authCode)
+    # get email:https://developers.google.com/identity/sign-in/web/server-side-flow#step_7_exchange_the_authorization_code_for_an_access_token
+    # NOTE: manually inspecting the credentials.json file reveals the email is available as a field nested under "id_token"
+
     # store credentials in database
-
-    authorizeUserRecord(credentials, googleAccount)
+    response = authorizeUserRecord(credentials, signupEmail)
+    print('Logging DynamoDB response: ', response)
