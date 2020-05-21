@@ -2,7 +2,7 @@ version: 0.2
 
 env:
   variables:
-    APP: "google_auth"
+    APP: "google-auth"
     FUNCTION_NAME: "auth_lambda"
     BUCKET: "auth"
 
