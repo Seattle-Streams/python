@@ -1,0 +1,30 @@
+version: 0.2
+
+env:
+  variables:
+    APP: "google_auth"
+    FUNCTION_NAME: "auth_lambda"
+    BUCKET: "auth"
+
+phases:
+  build:
+    commands:
+      - echo Entered the build phase...
+      - cd lambda/$APP
+      - rm -rf dependencies
+      - rm -f Auth.zip
+      - mkdir -p dependencies  
+      - pip3 install -r requirements.txt -t ./dependencies  
+      - cd dependencies
+      - zip -r9 "./../Auth.zip" .
+      - cd -
+      - zip -g Auth.zip Auth.py
+    finally:
+      - echo Build complete
+  post_build:
+    commands:
+      - echo Entered the post_build phase...
+      - aws s3 cp Auth.zip s3://$BUCKET/$APP/
+    #   - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/Auth.zip --region us-west-2
+    finally:
+      - echo "Deploy complete"
