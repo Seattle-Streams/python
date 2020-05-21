@@ -3,7 +3,7 @@ version: 0.2
 env:
   variables:
     APP: "google-auth"
-    FUNCTION_NAME: "auth_lambda"
+    FUNCTION_NAME: "google_auth_lambda"
     BUCKET: "auth-resources"
 
 phases:
@@ -25,6 +25,6 @@ phases:
     commands:
       - echo Entered the post_build phase...
       - aws s3 cp Auth.zip s3://$BUCKET/$APP/
-    #   - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/Auth.zip --region us-west-2
+      - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/Auth.zip --region us-west-2
     finally:
       - echo "Deploy complete"
