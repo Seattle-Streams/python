@@ -10,22 +10,34 @@ sqs = boto3.client('sqs')
 # ProcessMessage extracts the SMS message and Twilio receiving phone number
 # from the request and sends it to an SQS Queue
 def ProcessMessage(event, context):
-    requestJSON = parse_qs(event['body'])
-    number = requestJSON['To'][0]
-    message = requestJSON['Body'][0]
+    try:
+        requestJSON = parse_qs(event['body'])
+    except KeyError:
+        raise ValueError("Event must contain field body")
+
+    try:
+        twilioReceivingPhoneNumber = requestJSON['To'][0]
+    except KeyError:
+        raise ValueError("Request body must contain field To")
+
+    # This is the end-user generated SMS message
+    try:
+        message = requestJSON['Body'][0]
+    except KeyError:
+        raise ValueError("Request body must contain field Body")
 
     queueResponse = sqs.send_message(
         QueueUrl=QUEUE_URL, 
         MessageBody=message, 
         MessageAttributes={
             'receiving-number': {
-                'StringValue': '{number}',
+                'StringValue': '{twilioReceivingPhoneNumber}',
                 'DataType': 'String'
             }
         }
     )
 
-    print("Logging Twilio Receiving Number: ", number)
+    print("Logging Twilio Receiving Number: ", twilioReceivingPhoneNumber)
     print("Logging SMS Message: ", message)
     print("Logging SQS Response: ", queueResponse)
 
