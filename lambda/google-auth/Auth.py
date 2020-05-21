@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from oauth2client import client
+from urllib.parse import parse_qs
 
 CLIENT_SECRET_FILE_PATH = "/tmp/google_client_secret.json"
 CLIENT_SECRET_S3_KEY = "google_client_secret.json"
@@ -70,8 +71,6 @@ def authorizeUserRecord(credentials, signupEmail):
     return response
     
 
-
-
 def AuthorizeGoogleUser(event, context):
     """ 
     AuthorizeGoogleUser exchanges the Google single-use authorization code for 
@@ -85,7 +84,7 @@ def AuthorizeGoogleUser(event, context):
      # parse event into fields
 
     try:
-        body = event["body"]
+        body = parse_qs(event['body'])
     except KeyError:
         raise ValueError("Event must contain field body")
 
