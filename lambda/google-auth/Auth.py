@@ -40,8 +40,21 @@ def getCredentials(authCode):
             SCOPES,
             authCode)
 
+def updateItem(signupEmail, credentialsInJSON):
+    response = table.update_item(
+            Key={
+                'Email': signupEmail
+            },
+            UpdateExpression='SET Credentials = :c',
+            ExpressionAttributeValues={
+                ':c': credentialsInJSON
+            }
+        )
+    return response
+
 def authorizeUserRecord(credentials, signupEmail):
     global dynamoDB
+    global table
     # make update call to 
     
     # Doubtful we need the google account at all
@@ -64,16 +77,19 @@ def authorizeUserRecord(credentials, signupEmail):
     if table is None:
         table = dynamoDB.Table('user')
 
+
     # TODO: Fix issue here - email is key but is not received by this lambda
-    response = table.update_item(
-        Key={
-            'Email': signupEmail
-        },
-        UpdateExpression='SET Credentials = :c',
-        ExpressionAttributeValues={
-            ':c': credentialsInJSON
-        }
-    )
+
+    try:
+        response = updateItem(signupEmail, credentialsInJSON)
+    except AttributeError:
+        try: 
+            table = dynamoDB.Table('user')
+        except AttributeError:
+            dynamoDB = boto3.resource('dynamodb', region_name='us-west-2')
+            table = dynamoDB.Table('user')
+        response = updateItem(signupEmail, credentialsInJSON)
+
     return response
     
 
