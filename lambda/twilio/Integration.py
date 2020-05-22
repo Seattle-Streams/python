@@ -11,7 +11,8 @@ sqs = boto3.client('sqs')
 # from the request and sends it to an SQS Queue
 def ProcessMessage(event, context):
     requestJSON = parse_qs(event['body'])
-    number = requestJSON['To'][0]
+    twilioReceivingPhoneNumber = requestJSON['To'][0]
+    # This is the end-user generated SMS message
     message = requestJSON['Body'][0]
 
     queueResponse = sqs.send_message(
@@ -19,13 +20,13 @@ def ProcessMessage(event, context):
         MessageBody=message, 
         MessageAttributes={
             'receiving-number': {
-                'StringValue': '{number}',
+                'StringValue': '{twilioReceivingPhoneNumber}',
                 'DataType': 'String'
             }
         }
     )
 
-    print("Logging Twilio Receiving Number: ", number)
+    print("Logging Twilio Receiving Number: ", twilioReceivingPhoneNumber)
     print("Logging SMS Message: ", message)
     print("Logging SQS Response: ", queueResponse)
 
