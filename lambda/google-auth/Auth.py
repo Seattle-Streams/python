@@ -20,6 +20,8 @@ dynamoDB = None
 table = None
 
 def getCredentials(authCode):  
+    global s3
+
     try:
         return client.credentials_from_clientsecrets_and_code(
             CLIENT_SECRET_FILE_PATH,
@@ -27,16 +29,18 @@ def getCredentials(authCode):
             authCode)
     # handle error where file does not exist
     except clientsecrets.InvalidClientSecretsError:
-        if s3 is None:
+  
+        try:
+            s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
+        except UnboundLocalError:
             s3 = boto3.client('s3')
-
-        s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
         return client.credentials_from_clientsecrets_and_code(
             CLIENT_SECRET_FILE_PATH,
             SCOPES,
             authCode)
 
 def authorizeUserRecord(credentials, signupEmail):
+    global dynamoDB
     # make update call to 
     
     # Doubtful we need the google account at all
