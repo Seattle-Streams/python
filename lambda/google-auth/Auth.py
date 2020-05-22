@@ -83,14 +83,9 @@ def AuthorizeGoogleUser(event, context):
     """
      # parse event into fields
 
-    eventString = parse_qs(event)
-    cleanEvent = eventString.replace('\\n', '').replace('\\t', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
-    eventObj = json.loads(cleanEvent)
-
-    try:
-        body = eventObj['body']
-    except KeyError:
-        raise ValueError("Event must contain field body")
+    bodyString = parse_qs(event)['body']
+    cleanBody = bodyString.replace('\\n', '').replace('\\t', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
+    body = json.loads(cleanBody)
 
     try:
         authCode = body['authCode']
