@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from oauth2client import client
+from oauth2client import clientsecrets
 from urllib.parse import parse_qs
 
 CLIENT_SECRET_FILE_PATH = "/tmp/google_client_secret.json"
@@ -25,7 +26,7 @@ def getCredentials(authCode):
             SCOPES,
             authCode)
     # handle error where file does not exist
-    except FileNotFoundError:
+    except clientsecrets.InvalidClientSecretsError:
         if s3 is None:
             s3 = boto3.client('s3')
 
