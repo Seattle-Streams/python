@@ -140,7 +140,7 @@ def getStoredCredentials(number):
     except KeyError:
         raise ValueError('There are no corresponding rows')
     try:
-        stringCredentials = firstRow['Credentials']
+        stringCredentials = firstRow['Credentials']['S']
     except KeyError:
         raise ValueError('Credentials do not exist for this record')
 
