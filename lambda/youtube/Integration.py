@@ -30,6 +30,9 @@ s3 = boto3.client('s3')
 BUCKET_NAME = os.environ['BUCKET_NAME']
 
 
+dynamoDB = None
+table = None
+
 # getLiveChatID gets the liveChatID of the currently streaming broadcast
 def getLiveChatID(youtubeObject) -> str:
     request = youtubeObject.liveBroadcasts().list(
@@ -69,17 +72,46 @@ def postMessage(youtubeObject, liveChatID, message) -> str:
 
     return response
 
+def scanDynamoDBTable(tableName, filterKey=None, filterValue=None):
+    """
+    Perform a scan operation on table.
+    Can specify filter_key (col name) and its value to be filtered.
+    This gets all pages of results. Returns list of items.
+    """
+    if dynamoDB is None:
+        # TODO: turn paramaters into environment variables and call from OS
+        # removed "endpoint_url param"
+        dynamoDB = boto3.resource('dynamodb', region_name='us-west-2')
+    if table is None:
+        table = dynamoDB.Table(tableName)
+
+    if filterKey and filterValue:
+        filteringExp = Attr(filterKey).eq(filterValue)
+        response = table.scan(FilterExpression=filteringExp)
+    else:
+        response = table.scan()
+
+    items = response['Items']
+    while True:
+        if response.get('LastEvaluatedKey'):
+            response = table.scan(ExclusiveStartKey=response['LastEvaluatedKey'])
+            items += response['Items']
+        else:
+            break
+
+    return items
+
 
 # for now, gets credentials if they exist, or breaks
-def getStoredCredentials():
+def getStoredCredentials(number):
 
     # pull credentials from S3
-    local_file_name = "/tmp/" + CREDENTIAL_FILE
-    s3.download_file(BUCKET_NAME, CREDENTIAL_FILE, local_file_name)
+    # local_file_name = "/tmp/" + CREDENTIAL_FILE
+    # s3.download_file(BUCKET_NAME, CREDENTIAL_FILE, local_file_name)
 
-    store = Storage(local_file_name)
+    #store = Storage(local_file_name)
 
-    credentials = store.locked_get()
+    #credentials = store.locked_get()
     # if not credentials or credentials.invalid:
 
     # Storage object  class:
@@ -96,13 +128,31 @@ def getStoredCredentials():
     # store.locked_put(credentials)
 
     # unclear what the value of this line is
-    credentials.set_store(store)
+    # credentials.set_store(store)
+
+    # scan table for ReceivingNumber == number
+
+    # should be a single row
+    scannedRows = scanDynamoDBTable('user', 'ReceivingNumber', number)
+    
+    try:
+        firstRow = scannedRows[0]
+    except KeyError:
+        raise ValueError('There are no corresponding rows')
+    try:
+        stringCredentials = firstRow['Credentials']
+    except KeyError:
+        raise ValueError('Credentials do not exist for this record')
+
+    # TODO: error handling here
+    credentials = client.Credentials.new_from_json(stringCredentials) 
+
     return credentials
 
 
 # auth authenticates with the provided client secrets file, scope, and authorization code
 # returns youtube client object
-def auth():
+def auth(number):
 
     # TODO: implement in api gateway
     # (Receive auth_code by HTTPS POST)
@@ -116,7 +166,7 @@ def auth():
     # *DO NOT* leave this option enabled in production.
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
 
-    credentials = getStoredCredentials()
+    credentials = getStoredCredentials(number)
 
     # changes methods of http object to add appropriate auth headers
     httpAuth = credentials.authorize(httplib2.Http())
@@ -138,7 +188,22 @@ def ProcessMessage(event, context):
     # TODO: handle attributes better. i.e. post messages in order and sort by livechatID 
     for rawMessage in messages:
         message = rawMessage['body']
-        youtubeObject = auth()
+        
+
+        if message.message_attributes is not None:
+            number = message.message_attributes.get('receiving-number').get('StringValue')
+            if number:
+                number_text = ' ({0})'.format(number) 
+       
+        if number_text is None:
+            print('could not find receiving-number on message')
+            continue
+
+        try:
+            youtubeObject = auth(number_text)
+        except ValueError:
+            print("could not match given number to an account")
+            continue
         try:
             liveChatID = getLiveChatID(youtubeObject)
         except ValueError:
