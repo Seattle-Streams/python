@@ -56,7 +56,7 @@ def authorizeUserRecord(credentials, signupEmail):
         dynamoDB = boto3.resource('dynamodb', region_name='us-west-2')
 
     if table is None:
-        table = dynamoDB.Table('users')
+        table = dynamoDB.Table('user')
 
     # TODO: Fix issue here - email is key but is not received by this lambda
     response = table.update_item(
