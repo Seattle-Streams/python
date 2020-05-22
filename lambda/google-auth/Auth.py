@@ -89,7 +89,7 @@ def AuthorizeGoogleUser(event, context):
         raise ValueError("Event must contain field body")
 
     try:
-        authCode = body["auth_code"]
+        authCode = body["authCode"]
     except KeyError:
         raise ValueError("Event body must contain field auth_code")
     
