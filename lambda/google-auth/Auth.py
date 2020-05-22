@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from oauth2client import client
+from oauth2client import clientsecrets
 from urllib.parse import parse_qs
 
 CLIENT_SECRET_FILE_PATH = "/tmp/google_client_secret.json"
@@ -19,23 +20,41 @@ dynamoDB = None
 table = None
 
 def getCredentials(authCode):  
+    global s3
+
     try:
         return client.credentials_from_clientsecrets_and_code(
             CLIENT_SECRET_FILE_PATH,
             SCOPES,
             authCode)
     # handle error where file does not exist
-    except FileNotFoundError:
-        if s3 is None:
+    except clientsecrets.InvalidClientSecretsError:
+        try:
+            s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
+        except AttributeError:
             s3 = boto3.client('s3')
+            s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
 
-        s3.download_file(BUCKET_NAME, CLIENT_SECRET_S3_KEY, CLIENT_SECRET_FILE_PATH)
         return client.credentials_from_clientsecrets_and_code(
             CLIENT_SECRET_FILE_PATH,
             SCOPES,
             authCode)
 
+def updateItem(signupEmail, credentialsInJSON):
+    response = table.update_item(
+            Key={
+                'Email': signupEmail
+            },
+            UpdateExpression='SET Credentials = :c',
+            ExpressionAttributeValues={
+                ':c': credentialsInJSON
+            }
+        )
+    return response
+
 def authorizeUserRecord(credentials, signupEmail):
+    global dynamoDB
+    global table
     # make update call to 
     
     # Doubtful we need the google account at all
@@ -56,18 +75,21 @@ def authorizeUserRecord(credentials, signupEmail):
         dynamoDB = boto3.resource('dynamodb', region_name='us-west-2')
 
     if table is None:
-        table = dynamoDB.Table('users')
+        table = dynamoDB.Table('user')
+
 
     # TODO: Fix issue here - email is key but is not received by this lambda
-    response = table.update_item(
-        Key={
-            'Email': signupEmail
-        },
-        UpdateExpression='SET credentials = :c',
-        ExpressionAttributeValues={
-            ':c': credentialsInJSON
-        }
-    )
+
+    try:
+        response = updateItem(signupEmail, credentialsInJSON)
+    except AttributeError:
+        try: 
+            table = dynamoDB.Table('user')
+        except AttributeError:
+            dynamoDB = boto3.resource('dynamodb', region_name='us-west-2')
+            table = dynamoDB.Table('user')
+        response = updateItem(signupEmail, credentialsInJSON)
+
     return response
     
 
@@ -83,18 +105,17 @@ def AuthorizeGoogleUser(event, context):
     """
      # parse event into fields
 
-    try:
-        body = parse_qs(event['body'])
-    except KeyError:
-        raise ValueError("Event must contain field body")
+    bodyString = event['body']
+    cleanBody = bodyString.replace('\\n', '').replace('\\t', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
+    body = json.loads(cleanBody)
 
     try:
-        authCode = body["auth_code"]
+        authCode = body['authCode']
     except KeyError:
-        raise ValueError("Event body must contain field auth_code")
+        raise ValueError("event: " + json.dumps(event) + " Event body must contain field authCode")
     
     try:
-        signupEmail = body["email"]
+        signupEmail = body['email']
     except KeyError:
         raise ValueError("Event body must contain field email")
 
