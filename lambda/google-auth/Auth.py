@@ -2,6 +2,7 @@ import json
 import os
 import boto3
 from oauth2client import client
+from urllib.parse import parse_qs
 
 CLIENT_SECRET_FILE_PATH = "/tmp/google_client_secret.json"
 CLIENT_SECRET_S3_KEY = "google_client_secret.json"
@@ -82,7 +83,8 @@ def AuthorizeGoogleUser(event, context):
     """
      # parse event into fields
 
-    cleanEvent = event.replace('\\n', '').replace('\\t', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
+    eventString = parse_qs(event)
+    cleanEvent = eventString.replace('\\n', '').replace('\\t', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
     eventObj = json.loads(cleanEvent)
 
     try:
