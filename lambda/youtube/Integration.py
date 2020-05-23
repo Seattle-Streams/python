@@ -216,8 +216,8 @@ def ProcessMessage(event, context):
 
         try:
             youtubeObject = auth(number_text)
-        except ValueError:
-            print("could not match given number to an account")
+        except ValueError as e:
+            print('ValueError: ' + str(e) + 'could not match given number to an account')
             continue
         try:
             liveChatID = getLiveChatID(youtubeObject)
