@@ -112,7 +112,7 @@ def AuthorizeGoogleUser(event, context):
      # parse event into fields
 
     bodyString = event['body']
-    cleanBody = bodyString.replace('\\n', '').replace('\\t', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
+    cleanBody = bodyString.replace('\\n', '').replace('\\t', '').replace('\\r', '').replace('\\', '').replace('null', '"null"').replace('false', '"false"').replace('true', '"true"').replace('"{', '{').replace('}"', '}')
     body = json.loads(cleanBody)
 
     try:
