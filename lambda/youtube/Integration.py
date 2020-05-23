@@ -5,6 +5,8 @@ import os
 import httplib2
 import boto3
 
+from boto3.dynamodb.conditions import Attr
+
 from googleapiclient import discovery
 from oauth2client import client
 from oauth2client import tools
@@ -12,13 +14,14 @@ from oauth2client.file import Storage
 import googleapiclient.errors
 
 SCOPES = [
+    "email",
     "https://www.googleapis.com/auth/youtube.force-ssl",
     "https://www.googleapis.com/auth/youtube.readonly"
 ]
 API_SERVICE_NAME = "youtube"
 API_VERSION = "v3"
 # CLIENT_SECRET_FILE = "client_secret.json"
-CREDENTIAL_FILE = "credentials.json"
+# CREDENTIAL_FILE = "credentials.json"
 # AUTH_CODE = ""
 # Remember to verify authenticity of auth code!
 # https://developers.google.com/identity/sign-in/web/backend-auth
@@ -26,8 +29,8 @@ CREDENTIAL_FILE = "credentials.json"
 
 # MESSAGE = "Hello World!!"
 
-s3 = boto3.client('s3')
-BUCKET_NAME = os.environ['BUCKET_NAME']
+# s3 = boto3.client('s3')
+# BUCKET_NAME = os.environ['BUCKET_NAME']
 
 
 dynamoDB = None
@@ -78,6 +81,10 @@ def scanDynamoDBTable(tableName, filterKey=None, filterValue=None):
     Can specify filter_key (col name) and its value to be filtered.
     This gets all pages of results. Returns list of items.
     """
+    
+    global dynamoDB
+    global table
+    
     if dynamoDB is None:
         # TODO: turn paramaters into environment variables and call from OS
         # removed "endpoint_url param"
@@ -171,6 +178,7 @@ def auth(number):
     # changes methods of http object to add appropriate auth headers
     httpAuth = credentials.authorize(httplib2.Http())
 
+    # TODO: store refreshed credentials in dynamodb
     if credentials.access_token_expired:
         credentials.refresh(httplib2.Http())
         httpAuth = credentials.authorize(httplib2.Http())
