@@ -3,28 +3,34 @@ version: 0.2
 env:
   variables:
     APP: "twilio"
-    FUNCTION_NAME: "twilio_lambda"
     BUCKET: "process-messages"
+    FUNCTION_NAME: "twilio_lambda"
+    REGION: "us-west-2"
 
 phases:
   build:
     commands:
       - echo Entered the build phase...
       - cd lambda/$APP
-      - rm -rf dependencies
-      - rm -f Integration.zip
-      - mkdir -p dependencies  
+      - mkdir -p dependencies
       - pip3 install -r requirements.txt -t ./dependencies  
       - cd dependencies
-      - zip -r9 "./../Integration.zip" .
+      - commitID=$(git rev-parse HEAD)
+      - zip -r9 "./../${commitID}.zip" .
       - cd -
-      - zip -g Integration.zip Integration.py
+      - zip -g ${commitID}.zip Integration.py
     finally:
       - echo Build complete
   post_build:
     commands:
       - echo Entered the post_build phase...
-      - aws s3 cp Integration.zip s3://$BUCKET/$APP/
-      - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/Integration.zip --region us-west-2
+      - aws s3 cp ${commitID}.zip s3://$BUCKET/$APP/
+      - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/${commitID}.zip --region $REGION
+    #   - branch_name=$(git symbolic-ref HEAD 2>/dev/null)
+    #   - branch_name=${branch_name##refs/heads/}
+    #   # ONLY EXECUTE COMMANDS BELOW IF branch_name == 'dev' (eventually should be master)
+    #   - lambdaVersion=$(aws lambda publish-version --function-name $FUNCTION_NAME --region $REGION | jq -r '.Version')
+    #   - echo $lambdaVersion
+    #   - aws lambda update-alias --function-name $FUNCTION_NAME --name production --region $REGION --function-version ${lambdaVersion}      
     finally:
       - echo "Deploy complete"
