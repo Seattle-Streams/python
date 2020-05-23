@@ -200,7 +200,8 @@ def ProcessMessage(event, context):
         try:
             if rawMessage['messageAttributes'] is not None:
                 try:
-                    number = rawMessage['messageAttributes']['receiving-number']['StringValue']
+                    number = rawMessage.get('messageAttributes').get('receiving-number').get('stringValue')
+                    print('number: ' + number)
                     if number:
                         number_text = ' ({0})'.format(number) 
                 except KeyError:

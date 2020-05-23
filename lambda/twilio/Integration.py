@@ -16,7 +16,7 @@ def ProcessMessage(event, context):
         raise ValueError("Event must contain field body")
 
     try:
-        twilioReceivingPhoneNumber = requestJSON['To'][0]
+        twilioReceivingPhoneNumber = str(requestJSON['To'][0])
     except KeyError:
         raise ValueError("Request body must contain field To")
 
@@ -31,7 +31,7 @@ def ProcessMessage(event, context):
         MessageBody=message, 
         MessageAttributes={
             'receiving-number': {
-                'StringValue': '{twilioReceivingPhoneNumber}',
+                'StringValue': twilioReceivingPhoneNumber,
                 'DataType': 'String'
             }
         }
