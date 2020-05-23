@@ -4,6 +4,7 @@ env:
   variables:
     APP: "twilio"
     BUCKET: "process-messages"
+    DEPLOY_BRANCH: "dev"
     FUNCTION_NAME: "twilio_lambda"
     REGION: "us-west-2"
 
@@ -24,13 +25,6 @@ phases:
   post_build:
     commands:
       - echo Entered the post_build phase...
-      - aws s3 cp ${commitID}.zip s3://$BUCKET/$APP/
-      - aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCKET --s3-key $APP/${commitID}.zip --region $REGION
-    #   - branch_name=$(git symbolic-ref HEAD 2>/dev/null)
-    #   - branch_name=${branch_name##refs/heads/}
-    #   # ONLY EXECUTE COMMANDS BELOW IF branch_name == 'dev' (eventually should be master)
-    #   - lambdaVersion=$(aws lambda publish-version --function-name $FUNCTION_NAME --region $REGION | jq -r '.Version')
-    #   - echo $lambdaVersion
-    #   - aws lambda update-alias --function-name $FUNCTION_NAME --name production --region $REGION --function-version ${lambdaVersion}      
+      - sh deploy.sh --commitID $commitID --branch $DEPLOY_BRANCH
     finally:
       - echo "Deploy complete"
