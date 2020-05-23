@@ -198,12 +198,15 @@ def ProcessMessage(event, context):
         message = rawMessage['body']
         
         try:
-            if rawMessage['message_attributes'] is not None:
-                number = rawMessage['message_attributes'].get('receiving-number').get('StringValue')
-                if number:
-                    number_text = ' ({0})'.format(number) 
+            if rawMessage['messageAttributes'] is not None:
+                try:
+                    number = rawMessage['messageAttributes']['receiving-number']['StringValue']
+                    if number:
+                        number_text = ' ({0})'.format(number) 
+                except KeyError:
+                    raise ValueError("Error: messageAttributes missing or have incorrect receiving-number field")
         except KeyError:
-            raise KeyError("rawMessage structure: " + str(rawMessage) + " Error: couldn't find key")
+            raise ValueError('Error: missing messageAttributes field in message')
        
         if number_text is None:
             print('could not find receiving-number on message')
