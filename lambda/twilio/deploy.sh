@@ -28,7 +28,7 @@ aws lambda update-function-code --function-name $FUNCTION_NAME --s3-bucket $BUCK
 branch_name=$(git symbolic-ref HEAD 2>/dev/null)
 branch_name=${branch_name##refs/heads/}
 
-if [ "$branch_name" == "$branch" ]; then
+if [ $branch_name == $branch ]; then
     echo "Publing new lambda function version"
     lambdaVersion=$(aws lambda publish-version --function-name $FUNCTION_NAME --region $REGION | jq -r '.Version')
     aws lambda update-alias --function-name $FUNCTION_NAME --name production --region $REGION --function-version ${lambdaVersion}      

@@ -25,6 +25,6 @@ phases:
   post_build:
     commands:
       - echo Entered the post_build phase...
-      - sh deploy.sh --commitID $commitID --branch $DEPLOY_BRANCH
+      - bash deploy.sh --commitID $commitID --branch $DEPLOY_BRANCH
     finally:
       - echo "Deploy complete"
