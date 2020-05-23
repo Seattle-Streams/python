@@ -97,7 +97,8 @@ def scanDynamoDBTable(tableName, filterKey=None, filterValue=None):
         response = table.scan(FilterExpression=filteringExp)
     else:
         response = table.scan()
-
+    # DEBUG
+    print('response: ' + str(response))
     items = response['Items']
     while True:
         if response.get('LastEvaluatedKey'):
@@ -144,8 +145,8 @@ def getStoredCredentials(number):
     
     try:
         firstRow = scannedRows[0]
-    except KeyError:
-        raise ValueError('There are no corresponding rows')
+    except IndexError:
+        raise ValueError('scannedRows: ' + str(scannedRows) + 'There are no rows')
     try:
         stringCredentials = firstRow['Credentials']['S']
     except KeyError:
