@@ -118,7 +118,7 @@ def AuthorizeGoogleUser(event, context):
     try:
         authCode = body['authCode']
     except KeyError:
-        raise ValueError("event: " + json.dumps(event) + " Event body must contain field authCode")
+        raise ValueError("event: " + json.dumps(event) + "cleanBody: "  + cleanBody + " Event body must contain field authCode")
     
     try:
         signupEmail = body['email']
