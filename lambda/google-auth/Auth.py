@@ -45,6 +45,8 @@ def getCredentials(authCode):
     return credentials
 
 def updateItem(signupEmail, credentialsInJSON):
+    global table
+    
     response = table.update_item(
             Key={
                 'Email': signupEmail
