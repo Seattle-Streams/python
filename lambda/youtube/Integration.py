@@ -198,8 +198,8 @@ def ProcessMessage(event, context):
         message = rawMessage['body']
         
 
-        if message.message_attributes is not None:
-            number = message.message_attributes.get('receiving-number').get('StringValue')
+        if rawMessage['message_attributes'] is not None:
+            number = rawMessage['message_attributes'].get('receiving-number').get('StringValue')
             if number:
                 number_text = ' ({0})'.format(number) 
        
