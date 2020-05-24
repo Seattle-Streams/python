@@ -205,19 +205,17 @@ def ProcessMessage(event, context):
                 try:
                     number = rawMessage.get('messageAttributes').get('receiving-number').get('stringValue')
                     print('number: ' + number)
-                    if number:
-                        number_text = ' ({0})'.format(number) 
+                    
                 except KeyError:
                     raise ValueError("Error: messageAttributes missing or have incorrect receiving-number field")
         except KeyError:
             raise ValueError('Error: missing messageAttributes field in message')
        
-        if number_text is None:
+        if number is None:
             print('could not find receiving-number on message')
             continue
-
         try:
-            youtubeObject = auth(number_text)
+            youtubeObject = auth(number)
         except ValueError as e:
             print('ValueError: ' + str(e) + 'could not match given number to an account')
             continue
