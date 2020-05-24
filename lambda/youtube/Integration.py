@@ -150,7 +150,7 @@ def getStoredCredentials(number):
     except IndexError:
         raise ValueError('scannedRows: ' + str(scannedRows) + 'There are no rows')
     try:
-        stringCredentials = firstRow['Credentials']['S']
+        stringCredentials = firstRow['Credentials']
     except KeyError:
         raise ValueError('Credentials do not exist for this record')
 
