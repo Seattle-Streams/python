@@ -93,6 +93,8 @@ def scanDynamoDBTable(tableName, filterKey=None, filterValue=None):
         table = dynamoDB.Table(tableName)
 
     if filterKey and filterValue:
+        print('filterKey: ' + filterKey)
+        print('filterValue: ' + filterValue)
         filteringExp = Attr(filterKey).eq(filterValue)
         response = table.scan(FilterExpression=filteringExp)
     else:
